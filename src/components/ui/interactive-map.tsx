@@ -421,7 +421,6 @@ export const AdvancedMap = ({
               </Polyline>
             ))}
           </>
-        )}
       </MapContainer>
     </div>
   );
