@@ -1,7 +1,11 @@
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, Truck, Package, DollarSign, Calendar } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { User, Truck, Package, DollarSign, Calendar, FileText } from "lucide-react";
+import { OcrDocumentViewer } from "@/components/dashboard/OcrDocumentViewer";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DriverProfileDialogProps {
   open: boolean;
@@ -10,6 +14,8 @@ interface DriverProfileDialogProps {
 }
 
 export const DriverProfileDialog = ({ open, onOpenChange, driverName }: DriverProfileDialogProps) => {
+  const [driverDocuments, setDriverDocuments] = useState<any[]>([]);
+  
   // Mock data - substituir por dados reais do backend
   const driverData = {
     name: driverName || "",
@@ -49,6 +55,24 @@ export const DriverProfileDialog = ({ open, onOpenChange, driverName }: DriverPr
     ],
   };
 
+  useEffect(() => {
+    if (driverName && open) {
+      fetchDriverDocuments();
+    }
+  }, [driverName, open]);
+
+  const fetchDriverDocuments = async () => {
+    // TODO: Buscar pelo driver_id real quando estiver conectado ao banco
+    const { data, error } = await supabase
+      .from("driver_documents")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (!error && data) {
+      setDriverDocuments(data);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -59,7 +83,13 @@ export const DriverProfileDialog = ({ open, onOpenChange, driverName }: DriverPr
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <Tabs defaultValue="info" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="info">Informações</TabsTrigger>
+            <TabsTrigger value="documents">Documentos</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="info" className="space-y-6 mt-4">
           {/* Informações Básicas */}
           <Card>
             <CardHeader>
@@ -156,7 +186,46 @@ export const DriverProfileDialog = ({ open, onOpenChange, driverName }: DriverPr
               </div>
             </CardContent>
           </Card>
-        </div>
+        </TabsContent>
+
+        <TabsContent value="documents" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Documentos do Motorista
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {driverDocuments.length > 0 ? (
+                driverDocuments.map((doc) => (
+                  <OcrDocumentViewer
+                    key={doc.id}
+                    documentId={doc.id}
+                    documentType="driver_document"
+                    data={{
+                      image_url: doc.image_url,
+                      verified: doc.verified,
+                      ocr_raw_data: doc.ocr_raw_data,
+                      document_number: doc.document_number,
+                      issue_date: doc.issue_date,
+                      expiry_date: doc.expiry_date,
+                      issuing_agency: doc.issuing_agency,
+                    }}
+                    onUpdate={fetchDriverDocuments}
+                  />
+                ))
+              ) : (
+                <div className="p-4 bg-muted rounded-lg text-center">
+                  <p className="text-sm text-muted-foreground">
+                    Nenhum documento processado ainda
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
       </DialogContent>
     </Dialog>
   );

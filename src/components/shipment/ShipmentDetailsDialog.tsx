@@ -1,9 +1,12 @@
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, Package, DollarSign, Calendar, Mail, FileText, Upload, Eye, Download } from "lucide-react";
+import { OcrDocumentViewer } from "@/components/dashboard/OcrDocumentViewer";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ShipmentDetailsDialogProps {
   open: boolean;
@@ -12,6 +15,28 @@ interface ShipmentDetailsDialogProps {
 }
 
 export const ShipmentDetailsDialog = ({ open, onOpenChange, shipment }: ShipmentDetailsDialogProps) => {
+  const [deliveryReceipts, setDeliveryReceipts] = useState<any[]>([]);
+  
+  useEffect(() => {
+    if (shipment?.id && open) {
+      fetchDeliveryReceipts();
+    }
+  }, [shipment?.id, open]);
+
+  const fetchDeliveryReceipts = async () => {
+    if (!shipment?.id) return;
+    
+    const { data, error } = await supabase
+      .from("delivery_receipts")
+      .select("*")
+      .eq("shipment_id", shipment.id)
+      .order("created_at", { ascending: false });
+
+    if (!error && data) {
+      setDeliveryReceipts(data);
+    }
+  };
+
   if (!shipment) return null;
 
   const routeStates = ["SP", "MG", "RJ"];
@@ -175,17 +200,34 @@ export const ShipmentDetailsDialog = ({ open, onOpenChange, shipment }: Shipment
               <CardHeader>
                 <CardTitle className="text-lg">Canhoto de Entrega</CardTitle>
               </CardHeader>
-              <CardContent>
-                <Button variant="outline" className="w-full mb-4">
-                  <Upload className="h-4 w-4 mr-2" />
-                  Upload Manual do Canhoto
-                </Button>
-                <div className="p-4 bg-muted rounded-lg">
-                  <p className="text-sm font-medium mb-2">OCR Automático</p>
-                  <p className="text-sm text-muted-foreground">
-                    Quando o motorista enviar o canhoto via WhatsApp, ele aparecerá aqui automaticamente com os dados extraídos
-                  </p>
-                </div>
+              <CardContent className="space-y-4">
+                {deliveryReceipts.length > 0 ? (
+                  deliveryReceipts.map((receipt) => (
+                    <OcrDocumentViewer
+                      key={receipt.id}
+                      documentId={receipt.id}
+                      documentType="delivery_receipt"
+                      data={{
+                        image_url: receipt.image_url,
+                        verified: receipt.verified,
+                        ocr_raw_data: receipt.ocr_raw_data,
+                        delivery_date: receipt.delivery_date,
+                        delivery_time: receipt.delivery_time,
+                        receiver_name: receipt.receiver_name,
+                        receiver_signature: receipt.receiver_signature,
+                        observations: receipt.observations,
+                      }}
+                      onUpdate={fetchDeliveryReceipts}
+                    />
+                  ))
+                ) : (
+                  <div className="p-4 bg-muted rounded-lg">
+                    <p className="text-sm font-medium mb-2">Nenhum canhoto enviado ainda</p>
+                    <p className="text-sm text-muted-foreground">
+                      Quando o motorista enviar o canhoto via WhatsApp, ele aparecerá aqui automaticamente com os dados extraídos por OCR
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
