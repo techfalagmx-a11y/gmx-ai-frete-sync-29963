@@ -1,75 +1,60 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
-    }
-
     const { imageUrl, documentType } = await req.json();
 
-    if (!imageUrl) {
-      return new Response(
-        JSON.stringify({ error: "imageUrl is required" }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    console.log("Processing OCR for:", { imageUrl, documentType });
+
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Use Lovable AI with vision capabilities
+    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+    if (!lovableApiKey) {
+      throw new Error("LOVABLE_API_KEY not configured");
     }
 
-    // Definir prompts específicos por tipo de documento
-    const prompts = {
-      canhoto: `Analise esta imagem de canhoto de entrega e extraia as seguintes informações em formato JSON:
-        - delivery_date: Data de entrega (formato YYYY-MM-DD)
-        - delivery_time: Hora de entrega (formato HH:MM)
-        - receiver_name: Nome de quem recebeu
-        - receiver_signature: Indicar se tem assinatura (sim/não)
-        - observations: Quaisquer observações anotadas
-        
-        Retorne APENAS o JSON, sem texto adicional.`,
+    // Prepare prompt based on document type
+    let systemPrompt = "";
+    if (documentType === "delivery_receipt") {
+      systemPrompt = `Extract the following information from this delivery receipt (canhoto de entrega) image:
+      - delivery_date: Date of delivery (YYYY-MM-DD format)
+      - delivery_time: Time of delivery (HH:MM format)
+      - receiver_name: Name of the person who received the delivery
+      - receiver_signature: Description of signature if present
+      - observations: Any additional notes or observations
       
-      RG: `Analise esta imagem de RG e extraia as seguintes informações em formato JSON:
-        - document_number: Número do RG
-        - issue_date: Data de emissão (formato YYYY-MM-DD)
-        - issuing_agency: Órgão emissor
-        - holder_name: Nome do titular
-        
-        Retorne APENAS o JSON, sem texto adicional.`,
+      Return ONLY a valid JSON object with these fields.`;
+    } else if (documentType === "driver_document") {
+      systemPrompt = `Extract the following information from this Brazilian identification document image:
+      - document_number: The document number
+      - issue_date: Date of issue (YYYY-MM-DD format)
+      - expiry_date: Expiration date if applicable (YYYY-MM-DD format)
+      - issuing_agency: Issuing agency or organization
       
-      CPF: `Analise esta imagem de CPF e extraia as seguintes informações em formato JSON:
-        - document_number: Número do CPF
-        - issue_date: Data de emissão (formato YYYY-MM-DD)
-        - holder_name: Nome do titular
-        
-        Retorne APENAS o JSON, sem texto adicional.`,
-      
-      CNH: `Analise esta imagem de CNH e extraia as seguintes informações em formato JSON:
-        - document_number: Número da CNH
-        - issue_date: Data de emissão (formato YYYY-MM-DD)
-        - expiry_date: Data de validade (formato YYYY-MM-DD)
-        - issuing_agency: Órgão emissor
-        - holder_name: Nome do titular
-        - category: Categoria da CNH
-        
-        Retorne APENAS o JSON, sem texto adicional.`
-    };
+      Return ONLY a valid JSON object with these fields.`;
+    } else {
+      throw new Error("Invalid document type");
+    }
 
-    const prompt = prompts[documentType as keyof typeof prompts] || prompts.canhoto;
-
-    console.log(`Processing OCR for ${documentType}`);
-
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    // Call Lovable AI with vision
+    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${lovableApiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -78,69 +63,66 @@ serve(async (req) => {
           {
             role: "user",
             content: [
-              { type: "text", text: prompt },
+              { type: "text", text: systemPrompt },
               {
                 type: "image_url",
-                image_url: { url: imageUrl }
-              }
-            ]
-          }
-        ]
+                image_url: { url: imageUrl },
+              },
+            ],
+          },
+        ],
       }),
     });
 
-    if (!response.ok) {
-      if (response.status === 429) {
+    if (!aiResponse.ok) {
+      if (aiResponse.status === 429) {
         return new Response(
-          JSON.stringify({ error: "Rate limits exceeded, please try again later." }),
+          JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      if (response.status === 402) {
+      if (aiResponse.status === 402) {
         return new Response(
-          JSON.stringify({ error: "Payment required, please add funds to your Lovable AI workspace." }),
+          JSON.stringify({ error: "Payment required. Please add credits to your Lovable AI workspace." }),
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      throw new Error(`AI gateway error: ${response.status}`);
+      const errorText = await aiResponse.text();
+      console.error("AI gateway error:", aiResponse.status, errorText);
+      throw new Error("AI processing failed");
     }
 
-    const data = await response.json();
-    const extractedText = data.choices[0].message.content;
+    const aiData = await aiResponse.json();
+    const extractedText = aiData.choices?.[0]?.message?.content;
 
-    console.log("OCR Result:", extractedText);
+    console.log("AI extracted text:", extractedText);
 
-    // Tentar parsear o JSON extraído
-    let parsedData;
+    // Parse the JSON response
+    let extractedData;
     try {
-      // Remover markdown code blocks se existirem
-      const cleanText = extractedText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      parsedData = JSON.parse(cleanText);
+      extractedData = JSON.parse(extractedText);
     } catch (e) {
-      console.error("Failed to parse JSON:", e);
-      parsedData = { raw_text: extractedText };
+      console.error("Failed to parse AI response as JSON:", extractedText);
+      throw new Error("Invalid OCR response format");
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        data: parsedData,
-        raw_text: extractedText
+        data: extractedData,
+        raw_ocr: extractedText,
       }),
       {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
   } catch (error: any) {
-    console.error('Error in process-ocr function:', error);
+    console.error("Error in process-ocr function:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error.message || "Unknown error" }),
       {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
   }
