@@ -2,9 +2,13 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, DollarSign, CheckCircle, X, Mail, Maximize2, Play } from "lucide-react";
+import { MapPin, DollarSign, CheckCircle, X, Maximize2, Play } from "lucide-react";
 import { ShipmentDetailsDialog } from "@/components/shipment/ShipmentDetailsDialog";
 import { ShipmentTimer } from "@/components/shipment/ShipmentTimer";
+import { ShipmentTableView } from "@/components/shipment/ShipmentTableView";
+import { ShipmentViewControls } from "@/components/shipment/ShipmentViewControls";
+import { DriverProfileDialog } from "@/components/driver/DriverProfileDialog";
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { useNavigate } from "react-router-dom";
 
 const shipmentColumns = [
@@ -98,6 +102,12 @@ const shipmentColumns = [
 export const ShipmentBoard = () => {
   const [selectedShipment, setSelectedShipment] = useState<any>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<"card" | "table">("card");
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [focusColumn, setFocusColumn] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedDriver, setSelectedDriver] = useState<string | null>(null);
+  const [driverDialogOpen, setDriverDialogOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleViewDetails = (shipment: any) => {
@@ -106,7 +116,22 @@ export const ShipmentBoard = () => {
   };
 
   const handleDriverClick = (driverName: string) => {
-    navigate("/dashboard", { state: { tab: "cadastros", searchDriver: driverName } });
+    setSelectedDriver(driverName);
+    setDriverDialogOpen(true);
+  };
+
+  const visibleColumns = focusColumn 
+    ? shipmentColumns.filter(col => col.status === focusColumn)
+    : shipmentColumns;
+
+  const getPaginatedShipments = (shipments: any[]) => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return shipments.slice(startIndex, endIndex);
+  };
+
+  const getTotalPages = (shipments: any[]) => {
+    return Math.ceil(shipments.length / itemsPerPage);
   };
 
   return (
@@ -116,6 +141,13 @@ export const ShipmentBoard = () => {
         onOpenChange={setDialogOpen}
         shipment={selectedShipment}
       />
+      
+      <DriverProfileDialog
+        open={driverDialogOpen}
+        onOpenChange={setDriverDialogOpen}
+        driverName={selectedDriver}
+      />
+
       <div>
         <h2 className="text-3xl font-bold tracking-tight">
           Embarques - Ofertas de Fretes
@@ -125,119 +157,237 @@ export const ShipmentBoard = () => {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {shipmentColumns.map((column) => (
-          <div key={column.status} className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold">{column.title}</h3>
-              <Badge className={column.badgeColor}>
-                {column.shipments.length}
-              </Badge>
-            </div>
+      <ShipmentViewControls
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        itemsPerPage={itemsPerPage}
+        onItemsPerPageChange={(items) => {
+          setItemsPerPage(items);
+          setCurrentPage(1);
+        }}
+        focusColumn={focusColumn}
+        onFocusColumnChange={(col) => {
+          setFocusColumn(col);
+          setCurrentPage(1);
+        }}
+        columns={shipmentColumns}
+      />
 
-            <div className="space-y-3 max-h-[calc(100vh-300px)] overflow-y-auto pr-2">
-              {column.shipments.map((shipment) => (
-                <Card
-                  key={shipment.id}
-                  className={`shadow-card transition-all hover:shadow-hover cursor-pointer ${column.color}`}
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <CardTitle className="text-sm font-medium">
-                        {shipment.cargo}
-                      </CardTitle>
-                      <ShipmentTimer deadline={shipment.deadline} className="text-muted-foreground" />
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="space-y-2">
-                      <div className="flex items-start gap-2 text-sm">
-                        <MapPin className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                        <div className="min-w-0">
-                          <p className="font-medium truncate">{shipment.origin}</p>
-                          <p className="text-xs text-muted-foreground">Origem</p>
+      {viewMode === "card" ? (
+        <div className={`grid gap-4 ${focusColumn ? 'md:grid-cols-1' : 'md:grid-cols-2 lg:grid-cols-4'}`}>
+          {visibleColumns.map((column) => {
+            const paginatedShipments = getPaginatedShipments(column.shipments);
+            const totalPages = getTotalPages(column.shipments);
+
+            return (
+              <div key={column.status} className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold">{column.title}</h3>
+                  <Badge className={column.badgeColor}>
+                    {column.shipments.length}
+                  </Badge>
+                </div>
+
+                <div className="space-y-3">
+                  {paginatedShipments.map((shipment) => (
+                    <Card
+                      key={shipment.id}
+                      className={`shadow-card transition-all hover:shadow-hover cursor-pointer ${column.color}`}
+                    >
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <CardTitle className="text-sm font-medium">
+                            {shipment.cargo}
+                          </CardTitle>
+                          <ShipmentTimer 
+                            deadline={shipment.deadline} 
+                            className="text-muted-foreground"
+                            highlight={column.status === "pending"}
+                            realtime={column.status === "pending"}
+                          />
                         </div>
-                      </div>
-                      <div className="flex items-start gap-2 text-sm">
-                        <MapPin className="h-4 w-4 text-danger mt-0.5 flex-shrink-0" />
-                        <div className="min-w-0">
-                          <p className="font-medium truncate">{shipment.destination}</p>
-                          <p className="text-xs text-muted-foreground">Destino</p>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="space-y-2">
+                          <div className="flex items-start gap-2 text-sm">
+                            <MapPin className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <p className="font-medium truncate">{shipment.origin}</p>
+                              <p className="text-xs text-muted-foreground">Origem</p>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-2 text-sm">
+                            <MapPin className="h-4 w-4 text-danger mt-0.5 flex-shrink-0" />
+                            <div className="min-w-0">
+                              <p className="font-medium truncate">{shipment.destination}</p>
+                              <p className="text-xs text-muted-foreground">Destino</p>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
 
-                    <div className="flex items-center gap-2 pt-2 border-t">
-                      <DollarSign className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-semibold text-success">
-                        R$ {shipment.value.toLocaleString()}
-                      </span>
-                    </div>
+                        <div className="flex items-center gap-2 pt-2 border-t">
+                          <DollarSign className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-semibold text-success">
+                            R$ {shipment.value.toLocaleString()}
+                          </span>
+                        </div>
 
-                    {shipment.driver && (
-                      <div className="pt-2 border-t">
-                        <p className="text-xs text-muted-foreground">
-                          Motorista:{" "}
-                          <button
-                            className="font-medium text-primary hover:underline"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDriverClick(shipment.driver);
-                            }}
+                        {shipment.driver && (
+                          <div className="pt-2 border-t">
+                            <p className="text-xs text-muted-foreground">
+                              Motorista:{" "}
+                              <button
+                                className="font-medium text-primary hover:underline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDriverClick(shipment.driver);
+                                }}
+                              >
+                                {shipment.driver}
+                              </button>
+                            </p>
+                          </div>
+                        )}
+
+                        {shipment.startedAt && (
+                          <div className="pt-2 border-t">
+                            <p className="text-xs text-success font-medium">
+                              🚛 Em rota desde {shipment.startedAt}
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="flex gap-2 pt-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => handleViewDetails(shipment)}
                           >
-                            {shipment.driver}
-                          </button>
-                        </p>
-                      </div>
-                    )}
+                            <Maximize2 className="h-3 w-3 mr-1" />
+                            Detalhes
+                          </Button>
+                        </div>
 
-                    {shipment.startedAt && (
-                      <div className="pt-2 border-t">
-                        <p className="text-xs text-success font-medium">
-                          🚛 Em rota desde {shipment.startedAt}
-                        </p>
-                      </div>
-                    )}
+                        {column.status === "pending" && (
+                          <div className="flex gap-2 pt-2">
+                            <Button className="flex-1 bg-gradient-success hover:opacity-90" size="sm">
+                              <CheckCircle className="mr-1 h-3 w-3" />
+                              Confirmar GMX
+                            </Button>
+                            <Button variant="outline" size="sm" className="hover:bg-destructive/10">
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        )}
 
-                    <div className="flex gap-2 pt-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => handleViewDetails(shipment)}
-                      >
-                        <Maximize2 className="h-3 w-3 mr-1" />
-                        Detalhes
-                      </Button>
+                        {column.status === "confirmed" && (
+                          <div className="flex gap-2 pt-2">
+                            <Button className="flex-1 bg-gradient-primary hover:opacity-90" size="sm">
+                              <Play className="mr-1 h-3 w-3" />
+                              Iniciar Corrida
+                            </Button>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                {totalPages > 1 && (
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                          className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            onClick={() => setCurrentPage(page)}
+                            isActive={currentPage === page}
+                            className="cursor-pointer"
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+                      <PaginationItem>
+                        <PaginationNext 
+                          onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {visibleColumns.map((column) => {
+            const paginatedShipments = getPaginatedShipments(column.shipments);
+            const totalPages = getTotalPages(column.shipments);
+
+            return (
+              <Card key={column.status} className={column.color}>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>{column.title}</CardTitle>
+                    <Badge className={column.badgeColor}>
+                      {column.shipments.length}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <ShipmentTableView
+                    shipments={paginatedShipments}
+                    status={column.status}
+                    onViewDetails={handleViewDetails}
+                    onDriverClick={handleDriverClick}
+                  />
+                  
+                  {totalPages > 1 && (
+                    <div className="mt-4">
+                      <Pagination>
+                        <PaginationContent>
+                          <PaginationItem>
+                            <PaginationPrevious 
+                              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                              className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                            />
+                          </PaginationItem>
+                          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                            <PaginationItem key={page}>
+                              <PaginationLink
+                                onClick={() => setCurrentPage(page)}
+                                isActive={currentPage === page}
+                                className="cursor-pointer"
+                              >
+                                {page}
+                              </PaginationLink>
+                            </PaginationItem>
+                          ))}
+                          <PaginationItem>
+                            <PaginationNext 
+                              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                              className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
                     </div>
-
-                    {column.status === "pending" && (
-                      <div className="flex gap-2 pt-2">
-                        <Button className="flex-1 bg-gradient-success hover:opacity-90" size="sm">
-                          <CheckCircle className="mr-1 h-3 w-3" />
-                          Confirmar GMX
-                        </Button>
-                        <Button variant="outline" size="sm" className="hover:bg-destructive/10">
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    )}
-
-                    {column.status === "confirmed" && (
-                      <div className="flex gap-2 pt-2">
-                        <Button className="flex-1 bg-gradient-primary hover:opacity-90" size="sm">
-                          <Play className="mr-1 h-3 w-3" />
-                          Iniciar Corrida
-                        </Button>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

@@ -24,16 +24,16 @@ import {
 const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-card shadow-sm">
+      <header className="sticky top-0 z-50 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 shadow-sm">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-primary">
-                <Package className="h-6 w-6 text-primary-foreground" />
+              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-primary shadow-lg">
+                <Package className="h-7 w-7 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-foreground">GMX</h1>
-                <p className="text-sm text-muted-foreground">
+                <h1 className="text-3xl font-bold tracking-tight text-foreground">GMX</h1>
+                <p className="text-sm font-medium text-muted-foreground">
                   Sistema de Gestão de Fretes
                 </p>
               </div>
@@ -44,48 +44,80 @@ const Dashboard = () => {
 
       <main className="container mx-auto px-4 py-6">
         <Tabs defaultValue="stats" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-10 lg:w-auto lg:inline-grid overflow-x-auto">
-            <TabsTrigger value="stats" className="gap-2">
-              <BarChart3 className="h-4 w-4" />
-              <span className="hidden sm:inline">Dashboard</span>
-            </TabsTrigger>
-            <TabsTrigger value="registry" className="gap-2">
-              <Users className="h-4 w-4" />
-              <span className="hidden sm:inline">Cadastros</span>
-            </TabsTrigger>
-            <TabsTrigger value="available" className="gap-2">
-              <UserCheck className="h-4 w-4" />
-              <span className="hidden sm:inline">Disponíveis</span>
-            </TabsTrigger>
-            <TabsTrigger value="shipments" className="gap-2">
-              <Package className="h-4 w-4" />
-              <span className="hidden sm:inline">Embarques</span>
-            </TabsTrigger>
-            <TabsTrigger value="history" className="gap-2">
-              <History className="h-4 w-4" />
-              <span className="hidden sm:inline">Histórico</span>
-            </TabsTrigger>
-            <TabsTrigger value="tracking" className="gap-2">
-              <MapPin className="h-4 w-4" />
-              <span className="hidden sm:inline">Rastreamento</span>
-            </TabsTrigger>
-            <TabsTrigger value="ranking" className="gap-2">
-              <Sliders className="h-4 w-4" />
-              <span className="hidden sm:inline">Rankeamento</span>
-            </TabsTrigger>
-            <TabsTrigger value="messages" className="gap-2">
-              <MessageSquare className="h-4 w-4" />
-              <span className="hidden sm:inline">Mensagens</span>
-            </TabsTrigger>
-            <TabsTrigger value="faq" className="gap-2">
-              <MessageSquare className="h-4 w-4" />
-              <span className="hidden sm:inline">FAQ IA</span>
-            </TabsTrigger>
-            <TabsTrigger value="users" className="gap-2">
-              <Settings className="h-4 w-4" />
-              <span className="hidden sm:inline">Usuários</span>
-            </TabsTrigger>
-          </TabsList>
+          <div className="bg-card border rounded-lg p-2 shadow-sm">
+            <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10 gap-1 bg-transparent h-auto">
+              <TabsTrigger 
+                value="stats" 
+                className="flex-col sm:flex-row gap-1 sm:gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <BarChart3 className="h-5 w-5" />
+                <span className="text-xs sm:text-sm font-medium">Dashboard</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="registry" 
+                className="flex-col sm:flex-row gap-1 sm:gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <Users className="h-5 w-5" />
+                <span className="text-xs sm:text-sm font-medium">Cadastros</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="available" 
+                className="flex-col sm:flex-row gap-1 sm:gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <UserCheck className="h-5 w-5" />
+                <span className="text-xs sm:text-sm font-medium">Disponíveis</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="shipments" 
+                className="flex-col sm:flex-row gap-1 sm:gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <Package className="h-5 w-5" />
+                <span className="text-xs sm:text-sm font-medium">Embarques</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="history" 
+                className="flex-col sm:flex-row gap-1 sm:gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <History className="h-5 w-5" />
+                <span className="text-xs sm:text-sm font-medium">Histórico</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="tracking" 
+                className="flex-col sm:flex-row gap-1 sm:gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <MapPin className="h-5 w-5" />
+                <span className="text-xs sm:text-sm font-medium">Rastreamento</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="ranking" 
+                className="flex-col sm:flex-row gap-1 sm:gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <Sliders className="h-5 w-5" />
+                <span className="text-xs sm:text-sm font-medium">Rankeamento</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="messages" 
+                className="flex-col sm:flex-row gap-1 sm:gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <MessageSquare className="h-5 w-5" />
+                <span className="text-xs sm:text-sm font-medium">Mensagens</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="faq" 
+                className="flex-col sm:flex-row gap-1 sm:gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <MessageSquare className="h-5 w-5" />
+                <span className="text-xs sm:text-sm font-medium">FAQ IA</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="users" 
+                className="flex-col sm:flex-row gap-1 sm:gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <Settings className="h-5 w-5" />
+                <span className="text-xs sm:text-sm font-medium">Usuários</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="stats" className="space-y-6">
             <StatsDashboard />
