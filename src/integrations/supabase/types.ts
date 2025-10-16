@@ -230,51 +230,72 @@ export type Database = {
       }
       embarques: {
         Row: {
+          actual_arrival_time: string | null
           cargo_type: string | null
           client_name: string | null
           created_at: string
+          current_latitude: number | null
+          current_longitude: number | null
           delivery_date: string | null
+          delivery_window_end: string | null
+          delivery_window_start: string | null
           destination: string
           driver_id: string | null
           driver_value: number | null
           email_id: string | null
           id: string
+          last_location_update: string | null
           origin: string
           pickup_date: string | null
+          rejected_drivers_count: number | null
           status: string
           total_value: number | null
           updated_at: string
           weight: number | null
         }
         Insert: {
+          actual_arrival_time?: string | null
           cargo_type?: string | null
           client_name?: string | null
           created_at?: string
+          current_latitude?: number | null
+          current_longitude?: number | null
           delivery_date?: string | null
+          delivery_window_end?: string | null
+          delivery_window_start?: string | null
           destination: string
           driver_id?: string | null
           driver_value?: number | null
           email_id?: string | null
           id?: string
+          last_location_update?: string | null
           origin: string
           pickup_date?: string | null
+          rejected_drivers_count?: number | null
           status?: string
           total_value?: number | null
           updated_at?: string
           weight?: number | null
         }
         Update: {
+          actual_arrival_time?: string | null
           cargo_type?: string | null
           client_name?: string | null
           created_at?: string
+          current_latitude?: number | null
+          current_longitude?: number | null
           delivery_date?: string | null
+          delivery_window_end?: string | null
+          delivery_window_start?: string | null
           destination?: string
           driver_id?: string | null
           driver_value?: number | null
           email_id?: string | null
           id?: string
+          last_location_update?: string | null
           origin?: string
           pickup_date?: string | null
+          rejected_drivers_count?: number | null
           status?: string
           total_value?: number | null
           updated_at?: string
@@ -320,37 +341,37 @@ export type Database = {
       }
       ranking_rules: {
         Row: {
-          active: boolean
           created_at: string
           description: string | null
+          enabled: boolean | null
           id: string
           name: string
-          priority: number
-          rule_config: Json
+          parameters: Json | null
           rule_type: string
           updated_at: string
+          weight: number
         }
         Insert: {
-          active?: boolean
           created_at?: string
           description?: string | null
+          enabled?: boolean | null
           id?: string
           name: string
-          priority?: number
-          rule_config?: Json
+          parameters?: Json | null
           rule_type: string
           updated_at?: string
+          weight?: number
         }
         Update: {
-          active?: boolean
           created_at?: string
           description?: string | null
+          enabled?: boolean | null
           id?: string
           name?: string
-          priority?: number
-          rule_config?: Json
+          parameters?: Json | null
           rule_type?: string
           updated_at?: string
+          weight?: number
         }
         Relationships: []
       }

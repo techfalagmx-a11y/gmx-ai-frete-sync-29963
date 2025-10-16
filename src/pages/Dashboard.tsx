@@ -6,7 +6,7 @@ import { ShipmentHistory } from "@/components/dashboard/ShipmentHistory";
 import { StatsDashboard } from "@/components/dashboard/StatsDashboard";
 import { AIFaqManager } from "@/components/dashboard/AIFaqManager";
 import { UserManagement } from "@/components/dashboard/UserManagement";
-import { RealTimeTracking } from "@/components/dashboard/RealTimeTracking";
+import { VehicleTrackingMap } from "@/components/tracking/VehicleTrackingMap";
 import { RankingRulesConfig } from "@/components/dashboard/RankingRulesConfig";
 import { MessageTemplatesConfig } from "@/components/dashboard/MessageTemplatesConfig";
 import {
@@ -140,7 +140,7 @@ const Dashboard = () => {
           </TabsContent>
 
           <TabsContent value="tracking" className="space-y-6">
-            <RealTimeTracking />
+            <VehicleTrackingMap />
           </TabsContent>
 
           <TabsContent value="ranking" className="space-y-6">

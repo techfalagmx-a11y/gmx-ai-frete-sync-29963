@@ -25,6 +25,8 @@ const shipmentColumns = [
         cargo: "Autopeças",
         value: 8500,
         deadline: "Há 15 min",
+        rejected_drivers_count: 0,
+        delivery_window: "20/01 14:00 - 18:00",
       },
     ],
   },
@@ -42,6 +44,8 @@ const shipmentColumns = [
         value: 12000,
         deadline: "Há 1h",
         driver: "João Silva",
+        rejected_drivers_count: 2,
+        delivery_window: "20/01 16:00 - 20:00",
       },
     ],
   },
@@ -59,6 +63,8 @@ const shipmentColumns = [
         value: 6500,
         deadline: "Há 30 min",
         driver: "Carlos Lima",
+        rejected_drivers_count: 1,
+        delivery_window: "20/01 10:00 - 14:00",
       },
     ],
   },
@@ -77,6 +83,8 @@ const shipmentColumns = [
         deadline: "Há 2h",
         driver: "Pedro Santos",
         advancePayment: 70,
+        rejected_drivers_count: 0,
+        delivery_window: "21/01 08:00 - 12:00",
       },
     ],
   },
@@ -94,6 +102,9 @@ const shipmentColumns = [
         value: 15000,
         driver: "Maria Costa",
         startedAt: "Há 3h",
+        rejected_drivers_count: 0,
+        delivery_window: "22/01 09:00 - 17:00",
+        actual_arrival: null,
       },
     ],
   },
@@ -245,6 +256,30 @@ export const ShipmentBoard = () => {
                               >
                                 {shipment.driver}
                               </button>
+                            </p>
+                          </div>
+                        )}
+
+                        {shipment.delivery_window && (
+                          <div className="pt-2 border-t">
+                            <p className="text-xs text-muted-foreground">
+                              Janela de Entrega: <span className="font-medium">{shipment.delivery_window}</span>
+                            </p>
+                          </div>
+                        )}
+
+                        {shipment.rejected_drivers_count > 0 && (column.status === "new" || column.status === "sent") && (
+                          <div className="pt-2 border-t">
+                            <Badge variant="outline" className="text-xs">
+                              ❌ {shipment.rejected_drivers_count} motorista{shipment.rejected_drivers_count > 1 ? 's' : ''} recusou{shipment.rejected_drivers_count > 1 ? 'ram' : ''}
+                            </Badge>
+                          </div>
+                        )}
+
+                        {shipment.actual_arrival && (
+                          <div className="pt-2 border-t">
+                            <p className="text-xs text-success font-medium">
+                              ✓ Chegou: {shipment.actual_arrival}
                             </p>
                           </div>
                         )}
