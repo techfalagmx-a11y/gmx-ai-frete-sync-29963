@@ -1,13 +1,10 @@
-import { useEffect, useRef, useState } from "react";
-import mapboxgl from "mapbox-gl";
-import "mapbox-gl/dist/mapbox-gl.css";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Truck, MapPin, Clock, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { BrazilMap } from "./BrazilMap";
 
 // Mock data para visualização
 const mockShipments = [
@@ -59,97 +56,17 @@ const statusConfig: Record<string, { label: string; color: string }> = {
 };
 
 export const VehicleTrackingMap = () => {
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const markers = useRef<mapboxgl.Marker[]>([]);
   const [selectedShipment, setSelectedShipment] = useState<any>(null);
-  const [mapboxToken, setMapboxToken] = useState("");
-  const [isMapReady, setIsMapReady] = useState(false);
 
-  useEffect(() => {
-    if (!mapboxToken || !mapContainer.current || map.current) return;
-
-    mapboxgl.accessToken = mapboxToken;
-
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: "mapbox://styles/mapbox/streets-v12",
-      center: [-46.6333, -23.5505],
-      zoom: 6,
-    });
-
-    map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
-
-    map.current.on("load", () => {
-      setIsMapReady(true);
-    });
-
-    return () => {
-      markers.current.forEach(marker => marker.remove());
-      map.current?.remove();
-    };
-  }, [mapboxToken]);
-
-  useEffect(() => {
-    if (!isMapReady || !map.current) return;
-
-    // Remove markers antigos
-    markers.current.forEach(marker => marker.remove());
-    markers.current = [];
-
-    // Adicionar markers para cada embarque
-    mockShipments.forEach((shipment) => {
-      const el = document.createElement("div");
-      el.className = "marker";
-      el.style.backgroundColor = statusConfig[shipment.status]?.color || "#3b82f6";
-      el.style.width = "30px";
-      el.style.height = "30px";
-      el.style.borderRadius = "50%";
-      el.style.border = "3px solid white";
-      el.style.cursor = "pointer";
-      el.style.boxShadow = "0 2px 4px rgba(0,0,0,0.3)";
-
-      const marker = new mapboxgl.Marker(el)
-        .setLngLat([shipment.current_longitude, shipment.current_latitude])
-        .addTo(map.current!);
-
-      el.addEventListener("click", () => {
-        setSelectedShipment(shipment);
-      });
-
-      markers.current.push(marker);
-    });
-  }, [isMapReady]);
-
-  if (!mapboxToken) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Rastreamento de Veículos</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="p-4 bg-muted rounded-lg">
-            <p className="text-sm mb-4">
-              Para visualizar o mapa, insira seu token público do Mapbox.
-              <br />
-              Obtenha em: <a href="https://account.mapbox.com/" target="_blank" rel="noopener noreferrer" className="text-primary underline">account.mapbox.com</a>
-            </p>
-            <div className="flex gap-2">
-              <Input
-                type="text"
-                placeholder="pk.eyJ1..."
-                value={mapboxToken}
-                onChange={(e) => setMapboxToken(e.target.value)}
-              />
-              <Button onClick={() => setIsMapReady(false)}>
-                Carregar Mapa
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  const mapVehicles = mockShipments.map(shipment => ({
+    id: shipment.id,
+    position: {
+      lat: shipment.current_latitude,
+      lng: shipment.current_longitude
+    },
+    status: shipment.status,
+    label: shipment.driver_name.split(" ")[0]
+  }));
 
   return (
     <div className="grid gap-4 lg:grid-cols-3">
@@ -161,8 +78,17 @@ export const VehicleTrackingMap = () => {
               Rastreamento em Tempo Real
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div ref={mapContainer} className="h-[600px] rounded-lg" />
+          <CardContent className="p-0">
+            <div className="h-[600px]">
+              <BrazilMap 
+                vehicles={mapVehicles}
+                onVehicleClick={(id) => {
+                  const shipment = mockShipments.find(s => s.id === id);
+                  if (shipment) setSelectedShipment(shipment);
+                }}
+                selectedVehicleId={selectedShipment?.id}
+              />
+            </div>
           </CardContent>
         </Card>
       </div>
