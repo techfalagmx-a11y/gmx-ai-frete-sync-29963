@@ -10,7 +10,6 @@ import {
   useMap,
   useMapEvents
 } from 'react-leaflet';
-import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -327,59 +326,33 @@ export const AdvancedMap = ({
             />
           )}
 
-          {/* Markers with clustering */}
-          {enableClustering && markers.length > 0 ? (
-            <MarkerClusterGroup>
-              {markers.map((marker, index) => (
-                <Marker
-                  key={marker.id || index}
-                  position={marker.position}
-                  icon={marker.icon || createCustomIcon(marker.color, marker.size)}
-                  eventHandlers={{
-                    click: () => onMarkerClick && onMarkerClick(marker)
-                  }}
-                >
-                  {marker.popup && (
-                    <Popup>
-                      <div>
-                        <h3 className="font-semibold">{marker.popup.title}</h3>
-                        <p className="text-sm">{marker.popup.content}</p>
-                        {marker.popup.image && (
-                          <img 
-                            src={marker.popup.image} 
-                            alt={marker.popup.title}
-                            style={{ maxWidth: '200px', height: 'auto' }}
-                          />
-                        )}
-                      </div>
-                    </Popup>
-                  )}
-                </Marker>
-              ))}
-            </MarkerClusterGroup>
-          ) : (
-            <>
-              {markers.map((marker, index) => (
-                <Marker
-                  key={marker.id || index}
-                  position={marker.position}
-                  icon={marker.icon || createCustomIcon(marker.color, marker.size)}
-                  eventHandlers={{
-                    click: () => onMarkerClick && onMarkerClick(marker)
-                  }}
-                >
-                  {marker.popup && (
-                    <Popup>
-                      <div>
-                        <h3 className="font-semibold">{marker.popup.title}</h3>
-                        <p className="text-sm">{marker.popup.content}</p>
-                      </div>
-                    </Popup>
-                  )}
-                </Marker>
-              ))}
-            </>
-          )}
+          {/* Markers (no clustering to ensure compatibility) */}
+          {markers.map((marker, index) => (
+            <Marker
+              key={marker.id || index}
+              position={marker.position}
+              icon={marker.icon || createCustomIcon(marker.color, marker.size)}
+              eventHandlers={{
+                click: () => onMarkerClick && onMarkerClick(marker)
+              }}
+            >
+              {marker.popup && (
+                <Popup>
+                  <div>
+                    <h3 className="font-semibold">{marker.popup.title}</h3>
+                    <p className="text-sm">{marker.popup.content}</p>
+                    {marker.popup.image && (
+                      <img 
+                        src={marker.popup.image} 
+                        alt={marker.popup.title}
+                        style={{ maxWidth: '200px', height: 'auto' }}
+                      />
+                    )}
+                  </div>
+                </Popup>
+              )}
+            </Marker>
+          ))}
 
           {/* User location marker */}
           {userLocation && (
