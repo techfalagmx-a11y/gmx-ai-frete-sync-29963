@@ -1,102 +1,115 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Truck, MapPin, Clock, AlertCircle } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { BrazilMap } from "./BrazilMap";
+import { Truck, MapPin, Clock } from "lucide-react";
+import { AdvancedMap } from "@/components/ui/interactive-map";
 
-// Mock data para visualização
 const mockShipments = [
   {
     id: "1",
-    driver_name: "João Silva",
+    driver: "João Silva",
+    vehicle: "ABC-1234",
     origin: "São Paulo, SP",
     destination: "Rio de Janeiro, RJ",
-    status: "em_transito",
-    current_latitude: -23.5505,
-    current_longitude: -46.6333,
-    delivery_window_start: new Date(2025, 0, 20, 14, 0),
-    delivery_window_end: new Date(2025, 0, 20, 18, 0),
-    actual_arrival_time: null,
-    progress: 45,
+    status: "in_transit",
+    location: { lat: -23.5505, lng: -46.6333 },
+    deliveryWindow: {
+      start: "14:00",
+      end: "18:00",
+    },
   },
   {
     id: "2",
-    driver_name: "Maria Costa",
-    origin: "Campinas, SP",
-    destination: "Belo Horizonte, MG",
-    status: "em_transito",
-    current_latitude: -22.9068,
-    current_longitude: -47.0631,
-    delivery_window_start: new Date(2025, 0, 20, 16, 0),
-    delivery_window_end: new Date(2025, 0, 20, 20, 0),
-    actual_arrival_time: null,
-    progress: 30,
+    driver: "Maria Santos",
+    vehicle: "DEF-5678",
+    origin: "Belo Horizonte, MG",
+    destination: "Brasília, DF",
+    status: "pending",
+    location: { lat: -19.9167, lng: -43.9345 },
+    deliveryWindow: {
+      start: "10:00",
+      end: "14:00",
+    },
   },
   {
     id: "3",
-    driver_name: "Carlos Lima",
-    origin: "Santos, SP",
-    destination: "Curitiba, PR",
-    status: "entregue",
-    current_latitude: -25.4284,
-    current_longitude: -49.2733,
-    delivery_window_start: new Date(2025, 0, 20, 10, 0),
-    delivery_window_end: new Date(2025, 0, 20, 14, 0),
-    actual_arrival_time: new Date(2025, 0, 20, 12, 30),
-    progress: 100,
+    driver: "Carlos Oliveira",
+    vehicle: "GHI-9012",
+    origin: "Salvador, BA",
+    destination: "Recife, PE",
+    status: "delivered",
+    location: { lat: -12.9714, lng: -38.5014 },
+    deliveryWindow: {
+      start: "08:00",
+      end: "12:00",
+    },
   },
 ];
 
 const statusConfig: Record<string, { label: string; color: string }> = {
-  em_transito: { label: "Em Trânsito", color: "#3b82f6" },
-  entregue: { label: "Entregue", color: "#22c55e" },
-  atrasado: { label: "Atrasado", color: "#ef4444" },
+  in_transit: { label: "Em Trânsito", color: "blue" },
+  pending: { label: "Pendente", color: "orange" },
+  delivered: { label: "Entregue", color: "green" },
 };
 
 export const VehicleTrackingMap = () => {
   const [selectedShipment, setSelectedShipment] = useState<any>(null);
 
-  const mapVehicles = mockShipments.map(shipment => ({
-    id: shipment.id,
-    position: {
-      lat: shipment.current_latitude,
-      lng: shipment.current_longitude
-    },
-    status: shipment.status,
-    label: shipment.driver_name.split(" ")[0]
-  }));
+  const markers = mockShipments.map(shipment => {
+    const colorMap: Record<string, string> = {
+      in_transit: 'blue',
+      pending: 'orange',
+      delivered: 'green',
+    };
+
+    return {
+      id: shipment.id,
+      position: [shipment.location.lat, shipment.location.lng] as [number, number],
+      color: colorMap[shipment.status] || 'grey',
+      size: 'medium',
+      popup: {
+        title: `${shipment.driver} - ${shipment.vehicle}`,
+        content: `${shipment.origin} → ${shipment.destination}\nStatus: ${statusConfig[shipment.status].label}`,
+      },
+    };
+  });
+
+  const handleMarkerClick = (marker: any) => {
+    const shipment = mockShipments.find(s => s.id === marker.id);
+    setSelectedShipment(shipment);
+  };
 
   return (
-    <div className="grid gap-4 lg:grid-cols-3">
-      <div className="lg:col-span-2">
+    <div className="flex flex-col lg:flex-row gap-6 p-6">
+      {/* Map Section */}
+      <div className="lg:w-2/3">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <MapPin className="h-5 w-5" />
-              Rastreamento em Tempo Real
+              <Truck className="h-5 w-5" />
+              Rastreamento de Veículos
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-0">
-            <div className="h-[600px]">
-              <BrazilMap 
-                vehicles={mapVehicles}
-                onVehicleClick={(id) => {
-                  const shipment = mockShipments.find(s => s.id === id);
-                  if (shipment) setSelectedShipment(shipment);
-                }}
-                selectedVehicleId={selectedShipment?.id}
-              />
-            </div>
+          <CardContent>
+            <AdvancedMap 
+              center={[-15.7801, -47.9292]}
+              zoom={5}
+              markers={markers}
+              onMarkerClick={handleMarkerClick}
+              enableClustering={true}
+              enableSearch={true}
+              enableControls={true}
+              style={{ height: '600px', width: '100%' }}
+            />
           </CardContent>
         </Card>
       </div>
 
-      <div className="space-y-4">
+      {/* Shipments List */}
+      <div className="lg:w-1/3 space-y-4">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Veículos Ativos</CardTitle>
+            <CardTitle className="text-lg">Embarques Ativos</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {mockShipments.map((shipment) => (
@@ -112,31 +125,26 @@ export const VehicleTrackingMap = () => {
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <Truck className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium text-sm">{shipment.driver_name}</span>
+                    <span className="font-medium text-sm">{shipment.driver}</span>
                   </div>
                   <Badge
-                    style={{
-                      backgroundColor: statusConfig[shipment.status]?.color,
-                      color: "white",
-                    }}
+                    variant="secondary"
+                    className="text-xs"
                   >
-                    {statusConfig[shipment.status]?.label}
+                    {statusConfig[shipment.status].label}
                   </Badge>
                 </div>
                 <div className="text-xs text-muted-foreground space-y-1">
-                  <p>
-                    {shipment.origin} → {shipment.destination}
-                  </p>
+                  <div className="flex items-center gap-1">
+                    <MapPin className="h-3 w-3" />
+                    <p className="truncate">
+                      {shipment.origin} → {shipment.destination}
+                    </p>
+                  </div>
                   <div className="flex items-center gap-1">
                     <Clock className="h-3 w-3" />
-                    Janela: {format(shipment.delivery_window_start, "HH:mm", { locale: ptBR })} -{" "}
-                    {format(shipment.delivery_window_end, "HH:mm", { locale: ptBR })}
+                    Janela: {shipment.deliveryWindow.start} - {shipment.deliveryWindow.end}
                   </div>
-                  {shipment.actual_arrival_time && (
-                    <div className="flex items-center gap-1 text-success">
-                      ✓ Chegada: {format(shipment.actual_arrival_time, "HH:mm", { locale: ptBR })}
-                    </div>
-                  )}
                 </div>
               </div>
             ))}
@@ -151,7 +159,17 @@ export const VehicleTrackingMap = () => {
             <CardContent className="space-y-3 text-sm">
               <div>
                 <p className="text-muted-foreground">Motorista</p>
-                <p className="font-medium">{selectedShipment.driver_name}</p>
+                <p className="font-medium">{selectedShipment.driver}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Veículo</p>
+                <p className="font-medium">{selectedShipment.vehicle}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Status</p>
+                <Badge variant="secondary">
+                  {statusConfig[selectedShipment.status].label}
+                </Badge>
               </div>
               <div>
                 <p className="text-muted-foreground">Rota</p>
@@ -160,44 +178,18 @@ export const VehicleTrackingMap = () => {
                 </p>
               </div>
               <div>
-                <p className="text-muted-foreground">Progresso</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <div className="flex-1 bg-muted rounded-full h-2">
-                    <div
-                      className="bg-primary h-2 rounded-full transition-all"
-                      style={{ width: `${selectedShipment.progress}%` }}
-                    />
-                  </div>
-                  <span className="text-xs font-medium">{selectedShipment.progress}%</span>
-                </div>
-              </div>
-              <div>
                 <p className="text-muted-foreground">Janela de Entrega</p>
                 <p className="font-medium">
-                  {format(selectedShipment.delivery_window_start, "dd/MM/yyyy HH:mm", {
-                    locale: ptBR,
-                  })}{" "}
-                  -{" "}
-                  {format(selectedShipment.delivery_window_end, "HH:mm", { locale: ptBR })}
+                  {selectedShipment.deliveryWindow.start} - {selectedShipment.deliveryWindow.end}
                 </p>
               </div>
-              {selectedShipment.actual_arrival_time ? (
-                <div>
-                  <p className="text-muted-foreground">Hora de Chegada Real</p>
-                  <p className="font-medium text-success">
-                    {format(selectedShipment.actual_arrival_time, "dd/MM/yyyy HH:mm", {
-                      locale: ptBR,
-                    })}
-                  </p>
-                </div>
-              ) : (
-                <div className="flex items-start gap-2 p-2 bg-muted rounded">
-                  <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5" />
-                  <p className="text-xs text-muted-foreground">
-                    Aguardando chegada no destino
-                  </p>
-                </div>
-              )}
+              <div>
+                <p className="text-muted-foreground">Localização Atual</p>
+                <p className="font-medium text-xs">
+                  Lat: {selectedShipment.location.lat.toFixed(4)}, 
+                  Lng: {selectedShipment.location.lng.toFixed(4)}
+                </p>
+              </div>
             </CardContent>
           </Card>
         )}
