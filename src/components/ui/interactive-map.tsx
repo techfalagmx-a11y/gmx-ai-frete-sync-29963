@@ -292,10 +292,6 @@ export const AdvancedMap = ({
         style={{ height: '100%', width: '100%' }}
         scrollWheelZoom={true}
       >
-        {
-          // @ts-expect-error React-Leaflet internal Consumer expects a function child in this environment
-          () => (
-
           <>
             {/* Base tile layers */}
             {currentLayers.openstreetmap && (
