@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DriverProfileDialog } from "@/components/driver/DriverProfileDialog";
 
 const mockDrivers = [
   {
@@ -86,6 +87,8 @@ export const DriverRegistry = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [stateFilter, setStateFilter] = useState<string>("all");
   const [daysWithoutFreight, setDaysWithoutFreight] = useState<string>("");
+  const [selectedDriver, setSelectedDriver] = useState<string | null>(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const itemsPerPage = 20;
 
   // Aplicar filtros
@@ -317,7 +320,14 @@ export const DriverRegistry = () => {
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {currentDrivers.map((driver) => (
-                <Card key={driver.id} className="shadow-card transition-all hover:shadow-md">
+                <Card 
+                  key={driver.id} 
+                  className="shadow-card transition-all hover:shadow-md cursor-pointer"
+                  onClick={() => {
+                    setSelectedDriver(driver.name);
+                    setIsProfileOpen(true);
+                  }}
+                >
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-2">
@@ -386,7 +396,14 @@ export const DriverRegistry = () => {
                 </TableRow>
               ) : (
                 currentDrivers.map((driver) => (
-                  <TableRow key={driver.id} className="hover:bg-muted/50">
+                  <TableRow 
+                    key={driver.id} 
+                    className="hover:bg-muted/50 cursor-pointer"
+                    onClick={() => {
+                      setSelectedDriver(driver.name);
+                      setIsProfileOpen(true);
+                    }}
+                  >
                     <TableCell className="font-medium">{driver.name}</TableCell>
                     <TableCell>{driver.cpf}</TableCell>
                     <TableCell>{driver.plate}</TableCell>
@@ -407,7 +424,15 @@ export const DriverRegistry = () => {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedDriver(driver.name);
+                          setIsProfileOpen(true);
+                        }}
+                      >
                         <FileText className="h-4 w-4" />
                       </Button>
                     </TableCell>
@@ -449,6 +474,12 @@ export const DriverRegistry = () => {
           </PaginationItem>
         </PaginationContent>
       </Pagination>
+
+      <DriverProfileDialog
+        open={isProfileOpen}
+        onOpenChange={setIsProfileOpen}
+        driverName={selectedDriver}
+      />
     </div>
   );
 };

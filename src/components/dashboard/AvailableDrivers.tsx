@@ -6,6 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RefreshCw, MapPin, Clock, Truck, List, Grid } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { DriverProfileDialog } from "@/components/driver/DriverProfileDialog";
 
 const mockAvailableDrivers = [
   {
@@ -41,6 +42,8 @@ export const AvailableDrivers = () => {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [viewMode, setViewMode] = useState<"grid" | "table">("table");
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedDriver, setSelectedDriver] = useState<string | null>(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const itemsPerPage = 20;
   
   const totalPages = Math.ceil(mockAvailableDrivers.length / itemsPerPage);
@@ -103,7 +106,11 @@ export const AvailableDrivers = () => {
           {currentDrivers.map((driver) => (
             <Card
               key={driver.id}
-              className="shadow-card transition-all hover:shadow-md border-success/20"
+              className="shadow-card transition-all hover:shadow-md border-success/20 cursor-pointer"
+              onClick={() => {
+                setSelectedDriver(driver.name);
+                setIsProfileOpen(true);
+              }}
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
@@ -151,7 +158,14 @@ export const AvailableDrivers = () => {
             </TableHeader>
             <TableBody>
               {currentDrivers.map((driver) => (
-                <TableRow key={driver.id} className="hover:bg-muted/50">
+                <TableRow 
+                  key={driver.id} 
+                  className="hover:bg-muted/50 cursor-pointer"
+                  onClick={() => {
+                    setSelectedDriver(driver.name);
+                    setIsProfileOpen(true);
+                  }}
+                >
                   <TableCell className="font-medium">{driver.name}</TableCell>
                   <TableCell>{driver.plate}</TableCell>
                   <TableCell>{driver.vehicle}</TableCell>
@@ -198,6 +212,12 @@ export const AvailableDrivers = () => {
           </PaginationItem>
         </PaginationContent>
       </Pagination>
+
+      <DriverProfileDialog
+        open={isProfileOpen}
+        onOpenChange={setIsProfileOpen}
+        driverName={selectedDriver}
+      />
     </div>
   );
 };
