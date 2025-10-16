@@ -11,13 +11,47 @@ interface DriverProfileDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   driverName: string | null;
+  driverData?: any;
 }
 
-export const DriverProfileDialog = ({ open, onOpenChange, driverName }: DriverProfileDialogProps) => {
+export const DriverProfileDialog = ({ open, onOpenChange, driverName, driverData }: DriverProfileDialogProps) => {
   const [driverDocuments, setDriverDocuments] = useState<any[]>([]);
+  const [allFields, setAllFields] = useState<any[]>([]);
   
-  // Mock data - substituir por dados reais do backend
-  const driverData = {
+  useEffect(() => {
+    if (open) {
+      fetchAllFields();
+      if (driverData?.id) {
+        fetchDriverDocuments();
+      }
+    }
+  }, [open, driverData]);
+
+  const fetchAllFields = async () => {
+    const { data } = await supabase
+      .from("driver_field_config")
+      .select("*")
+      .order("display_order", { ascending: true });
+    
+    if (data) setAllFields(data);
+  };
+
+  const fetchDriverDocuments = async () => {
+    if (!driverData?.id) return;
+    
+    const { data, error } = await supabase
+      .from("driver_documents")
+      .select("*")
+      .eq("driver_id", driverData.id)
+      .order("created_at", { ascending: false });
+
+    if (!error && data) {
+      setDriverDocuments(data);
+    }
+  };
+  
+  // Mock data for fallback
+  const mockData = {
     name: driverName || "",
     phone: "(11) 98765-4321",
     vehicle: "Scania R450 - Placa: ABC-1234",
@@ -55,23 +89,7 @@ export const DriverProfileDialog = ({ open, onOpenChange, driverName }: DriverPr
     ],
   };
 
-  useEffect(() => {
-    if (driverName && open) {
-      fetchDriverDocuments();
-    }
-  }, [driverName, open]);
-
-  const fetchDriverDocuments = async () => {
-    // TODO: Buscar pelo driver_id real quando estiver conectado ao banco
-    const { data, error } = await supabase
-      .from("driver_documents")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (!error && data) {
-      setDriverDocuments(data);
-    }
-  };
+  const displayData = driverData || mockData;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -90,142 +108,164 @@ export const DriverProfileDialog = ({ open, onOpenChange, driverName }: DriverPr
           </TabsList>
 
           <TabsContent value="info" className="space-y-6 mt-4">
-          {/* Informações Básicas */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Informações Básicas</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Nome:</span>
-                <span className="font-medium">{driverData.name}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Telefone:</span>
-                <span className="font-medium">{driverData.phone}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Veículo:</span>
-                <span className="font-medium">{driverData.vehicle}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Avaliação:</span>
-                <Badge variant="secondary">{driverData.rating} ⭐</Badge>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Estatísticas */}
-          <div className="grid gap-4 md:grid-cols-2">
+            {/* Informações Completas */}
             <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 rounded-lg bg-primary/10">
-                    <Truck className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total de Viagens</p>
-                    <p className="text-2xl font-bold">{driverData.totalTrips}</p>
-                  </div>
-                </div>
+              <CardHeader>
+                <CardTitle className="text-lg">Informações Completas</CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-3 md:grid-cols-2">
+                {allFields.length > 0 && driverData ? (
+                  allFields.map((field) => {
+                    const value = driverData[field.field_name];
+                    if (!value && value !== 0 && value !== false) return null;
+                    
+                    return (
+                      <div key={field.id} className="flex items-center justify-between border-b pb-2">
+                        <span className="text-sm text-muted-foreground">{field.display_name}:</span>
+                        <span className="font-medium">{String(value)}</span>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between border-b pb-2">
+                      <span className="text-sm text-muted-foreground">Nome:</span>
+                      <span className="font-medium">{displayData.name}</span>
+                    </div>
+                    <div className="flex items-center justify-between border-b pb-2">
+                      <span className="text-sm text-muted-foreground">Telefone:</span>
+                      <span className="font-medium">{displayData.phone}</span>
+                    </div>
+                    <div className="flex items-center justify-between border-b pb-2">
+                      <span className="text-sm text-muted-foreground">Veículo:</span>
+                      <span className="font-medium">{displayData.vehicle}</span>
+                    </div>
+                    {displayData.rating && (
+                      <div className="flex items-center justify-between border-b pb-2">
+                        <span className="text-sm text-muted-foreground">Avaliação:</span>
+                        <Badge variant="secondary">{displayData.rating} ⭐</Badge>
+                      </div>
+                    )}
+                  </>
+                )}
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 rounded-lg bg-success/10">
-                    <DollarSign className="h-5 w-5 text-success" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Valor Total Transportado</p>
-                    <p className="text-2xl font-bold">R$ {driverData.totalValue.toLocaleString()}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Histórico de Viagens */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Package className="h-5 w-5" />
-                Histórico de Cargas
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {driverData.recentTrips.map((trip) => (
-                  <div
-                    key={trip.id}
-                    className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-start justify-between mb-2">
+            {/* Estatísticas */}
+            {displayData.totalTrips && (
+              <div className="grid gap-4 md:grid-cols-2">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 rounded-lg bg-primary/10">
+                        <Truck className="h-5 w-5 text-primary" />
+                      </div>
                       <div>
-                        <h4 className="font-medium">{trip.cargo}</h4>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                          <Calendar className="h-3 w-3" />
-                          {trip.date}
+                        <p className="text-sm text-muted-foreground">Total de Viagens</p>
+                        <p className="text-2xl font-bold">{displayData.totalTrips}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 rounded-lg bg-success/10">
+                        <DollarSign className="h-5 w-5 text-success" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Valor Total Transportado</p>
+                        <p className="text-2xl font-bold">R$ {displayData.totalValue?.toLocaleString()}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Histórico de Viagens */}
+            {displayData.recentTrips && displayData.recentTrips.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Package className="h-5 w-5" />
+                    Histórico de Cargas
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {displayData.recentTrips.map((trip: any) => (
+                      <div
+                        key={trip.id}
+                        className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <h4 className="font-medium">{trip.cargo}</h4>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                              <Calendar className="h-3 w-3" />
+                              {trip.date}
+                            </div>
+                          </div>
+                          <Badge variant="outline" className="bg-success/10">
+                            {trip.status}
+                          </Badge>
+                        </div>
+                        <div className="space-y-1 text-sm">
+                          <p className="text-muted-foreground">
+                            {trip.origin} → {trip.destination}
+                          </p>
+                          <p className="font-semibold text-success">
+                            R$ {trip.value.toLocaleString()}
+                          </p>
                         </div>
                       </div>
-                      <Badge variant="outline" className="bg-success/10">
-                        {trip.status}
-                      </Badge>
-                    </div>
-                    <div className="space-y-1 text-sm">
-                      <p className="text-muted-foreground">
-                        {trip.origin} → {trip.destination}
-                      </p>
-                      <p className="font-semibold text-success">
-                        R$ {trip.value.toLocaleString()}
-                      </p>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
 
-        <TabsContent value="documents" className="space-y-4 mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Documentos do Motorista
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {driverDocuments.length > 0 ? (
-                driverDocuments.map((doc) => (
-                  <OcrDocumentViewer
-                    key={doc.id}
-                    documentId={doc.id}
-                    documentType="driver_document"
-                    data={{
-                      image_url: doc.image_url,
-                      verified: doc.verified,
-                      ocr_raw_data: doc.ocr_raw_data,
-                      document_number: doc.document_number,
-                      issue_date: doc.issue_date,
-                      expiry_date: doc.expiry_date,
-                      issuing_agency: doc.issuing_agency,
-                    }}
-                    onUpdate={fetchDriverDocuments}
-                  />
-                ))
-              ) : (
-                <div className="p-4 bg-muted rounded-lg text-center">
-                  <p className="text-sm text-muted-foreground">
-                    Nenhum documento processado ainda
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="documents" className="space-y-4 mt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Documentos do Motorista
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {driverDocuments.length > 0 ? (
+                  driverDocuments.map((doc) => (
+                    <OcrDocumentViewer
+                      key={doc.id}
+                      documentId={doc.id}
+                      documentType="driver_document"
+                      data={{
+                        image_url: doc.image_url,
+                        verified: doc.verified,
+                        ocr_raw_data: doc.ocr_raw_data,
+                        document_number: doc.document_number,
+                        issue_date: doc.issue_date,
+                        expiry_date: doc.expiry_date,
+                        issuing_agency: doc.issuing_agency,
+                      }}
+                      onUpdate={fetchDriverDocuments}
+                    />
+                  ))
+                ) : (
+                  <div className="p-4 bg-muted rounded-lg text-center">
+                    <p className="text-sm text-muted-foreground">
+                      Nenhum documento processado ainda
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

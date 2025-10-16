@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DriverRegistry } from "@/components/dashboard/DriverRegistry";
+import { DynamicDriverRegistry } from "@/components/dashboard/DynamicDriverRegistry";
 import { AvailableDrivers } from "@/components/dashboard/AvailableDrivers";
 import { ShipmentBoard } from "@/components/dashboard/ShipmentBoard";
 import { ShipmentHistory } from "@/components/dashboard/ShipmentHistory";
@@ -124,7 +124,7 @@ const Dashboard = () => {
           </TabsContent>
 
           <TabsContent value="registry" className="space-y-6">
-            <DriverRegistry />
+            <DynamicDriverRegistry />
           </TabsContent>
 
           <TabsContent value="available" className="space-y-6">

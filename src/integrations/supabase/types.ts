@@ -110,6 +110,122 @@ export type Database = {
           updated_at?: string
           verified?: boolean | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "driver_documents_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      driver_field_config: {
+        Row: {
+          created_at: string
+          display_name: string
+          display_order: number | null
+          field_name: string
+          field_type: string | null
+          id: string
+          updated_at: string
+          visible_in_card: boolean | null
+          visible_in_table: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          display_order?: number | null
+          field_name: string
+          field_type?: string | null
+          id?: string
+          updated_at?: string
+          visible_in_card?: boolean | null
+          visible_in_table?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          display_order?: number | null
+          field_name?: string
+          field_type?: string | null
+          id?: string
+          updated_at?: string
+          visible_in_card?: boolean | null
+          visible_in_table?: boolean | null
+        }
+        Relationships: []
+      }
+      drivers: {
+        Row: {
+          availability_status: string | null
+          city: string | null
+          cpf: string | null
+          created_at: string
+          current_location: string | null
+          email: string | null
+          id: string
+          last_freight_date: string | null
+          last_update: string | null
+          metadata: Json | null
+          name: string
+          phone: string | null
+          registered_at: string | null
+          state: string | null
+          status: string | null
+          trailer_plate_1: string | null
+          trailer_plate_2: string | null
+          trailer_plate_3: string | null
+          truck_plate: string | null
+          updated_at: string
+          vehicle_type: string | null
+        }
+        Insert: {
+          availability_status?: string | null
+          city?: string | null
+          cpf?: string | null
+          created_at?: string
+          current_location?: string | null
+          email?: string | null
+          id?: string
+          last_freight_date?: string | null
+          last_update?: string | null
+          metadata?: Json | null
+          name: string
+          phone?: string | null
+          registered_at?: string | null
+          state?: string | null
+          status?: string | null
+          trailer_plate_1?: string | null
+          trailer_plate_2?: string | null
+          trailer_plate_3?: string | null
+          truck_plate?: string | null
+          updated_at?: string
+          vehicle_type?: string | null
+        }
+        Update: {
+          availability_status?: string | null
+          city?: string | null
+          cpf?: string | null
+          created_at?: string
+          current_location?: string | null
+          email?: string | null
+          id?: string
+          last_freight_date?: string | null
+          last_update?: string | null
+          metadata?: Json | null
+          name?: string
+          phone?: string | null
+          registered_at?: string | null
+          state?: string | null
+          status?: string | null
+          trailer_plate_1?: string | null
+          trailer_plate_2?: string | null
+          trailer_plate_3?: string | null
+          truck_plate?: string | null
+          updated_at?: string
+          vehicle_type?: string | null
+        }
         Relationships: []
       }
       embarques: {
