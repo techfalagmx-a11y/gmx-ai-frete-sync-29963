@@ -14,6 +14,158 @@ export type Database = {
   }
   public: {
     Tables: {
+      delivery_receipts: {
+        Row: {
+          created_at: string
+          delivery_date: string | null
+          delivery_time: string | null
+          id: string
+          image_url: string
+          observations: string | null
+          ocr_raw_data: Json | null
+          receiver_name: string | null
+          receiver_signature: string | null
+          shipment_id: string | null
+          updated_at: string
+          verified: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          delivery_date?: string | null
+          delivery_time?: string | null
+          id?: string
+          image_url: string
+          observations?: string | null
+          ocr_raw_data?: Json | null
+          receiver_name?: string | null
+          receiver_signature?: string | null
+          shipment_id?: string | null
+          updated_at?: string
+          verified?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          delivery_date?: string | null
+          delivery_time?: string | null
+          id?: string
+          image_url?: string
+          observations?: string | null
+          ocr_raw_data?: Json | null
+          receiver_name?: string | null
+          receiver_signature?: string | null
+          shipment_id?: string | null
+          updated_at?: string
+          verified?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_receipts_shipment_id_fkey"
+            columns: ["shipment_id"]
+            isOneToOne: false
+            referencedRelation: "embarques"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      driver_documents: {
+        Row: {
+          created_at: string
+          document_number: string | null
+          document_type: string
+          driver_id: string
+          expiry_date: string | null
+          id: string
+          image_url: string
+          issue_date: string | null
+          issuing_agency: string | null
+          ocr_raw_data: Json | null
+          updated_at: string
+          verified: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          document_number?: string | null
+          document_type: string
+          driver_id: string
+          expiry_date?: string | null
+          id?: string
+          image_url: string
+          issue_date?: string | null
+          issuing_agency?: string | null
+          ocr_raw_data?: Json | null
+          updated_at?: string
+          verified?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          document_number?: string | null
+          document_type?: string
+          driver_id?: string
+          expiry_date?: string | null
+          id?: string
+          image_url?: string
+          issue_date?: string | null
+          issuing_agency?: string | null
+          ocr_raw_data?: Json | null
+          updated_at?: string
+          verified?: boolean | null
+        }
+        Relationships: []
+      }
+      embarques: {
+        Row: {
+          cargo_type: string | null
+          client_name: string | null
+          created_at: string
+          delivery_date: string | null
+          destination: string
+          driver_id: string | null
+          driver_value: number | null
+          email_id: string | null
+          id: string
+          origin: string
+          pickup_date: string | null
+          status: string
+          total_value: number | null
+          updated_at: string
+          weight: number | null
+        }
+        Insert: {
+          cargo_type?: string | null
+          client_name?: string | null
+          created_at?: string
+          delivery_date?: string | null
+          destination: string
+          driver_id?: string | null
+          driver_value?: number | null
+          email_id?: string | null
+          id?: string
+          origin: string
+          pickup_date?: string | null
+          status?: string
+          total_value?: number | null
+          updated_at?: string
+          weight?: number | null
+        }
+        Update: {
+          cargo_type?: string | null
+          client_name?: string | null
+          created_at?: string
+          delivery_date?: string | null
+          destination?: string
+          driver_id?: string | null
+          driver_value?: number | null
+          email_id?: string | null
+          id?: string
+          origin?: string
+          pickup_date?: string | null
+          status?: string
+          total_value?: number | null
+          updated_at?: string
+          weight?: number | null
+        }
+        Relationships: []
+      }
       message_templates: {
         Row: {
           active: boolean
