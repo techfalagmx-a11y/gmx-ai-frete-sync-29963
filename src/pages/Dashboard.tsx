@@ -9,6 +9,7 @@ import { UserManagement } from "@/components/dashboard/UserManagement";
 import { RealTimeTracking } from "@/components/dashboard/RealTimeTracking";
 import { RankingRulesConfig } from "@/components/dashboard/RankingRulesConfig";
 import { MessageTemplatesConfig } from "@/components/dashboard/MessageTemplatesConfig";
+import { OcrDocumentsViewer } from "@/components/dashboard/OcrDocumentsViewer";
 import {
   Users,
   UserCheck,
@@ -19,6 +20,7 @@ import {
   Settings,
   MapPin,
   Sliders,
+  FileText,
 } from "lucide-react";
 
 const Dashboard = () => {
@@ -45,7 +47,7 @@ const Dashboard = () => {
       <main className="container mx-auto px-4 py-6">
         <Tabs defaultValue="stats" className="space-y-6">
           <div className="bg-card border rounded-lg p-2 shadow-sm">
-            <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10 gap-1 bg-transparent h-auto">
+            <TabsList className="grid w-full grid-cols-5 lg:grid-cols-11 gap-1 bg-transparent h-auto">
               <TabsTrigger 
                 value="stats" 
                 className="flex-col sm:flex-row gap-1 sm:gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
@@ -110,6 +112,13 @@ const Dashboard = () => {
                 <span className="text-xs sm:text-sm font-medium">FAQ IA</span>
               </TabsTrigger>
               <TabsTrigger 
+                value="documents" 
+                className="flex-col sm:flex-row gap-1 sm:gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <FileText className="h-5 w-5" />
+                <span className="text-xs sm:text-sm font-medium">Documentos</span>
+              </TabsTrigger>
+              <TabsTrigger 
                 value="users" 
                 className="flex-col sm:flex-row gap-1 sm:gap-2 py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
               >
@@ -153,6 +162,10 @@ const Dashboard = () => {
 
           <TabsContent value="faq" className="space-y-6">
             <AIFaqManager />
+          </TabsContent>
+
+          <TabsContent value="documents" className="space-y-6">
+            <OcrDocumentsViewer />
           </TabsContent>
 
           <TabsContent value="users" className="space-y-6">
