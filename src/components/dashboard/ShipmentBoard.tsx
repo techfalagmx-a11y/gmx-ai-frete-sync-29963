@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, DollarSign, CheckCircle, X, Maximize2, Play } from "lucide-react";
+import { MapPin, DollarSign, CheckCircle, X, Maximize2, Play, AlertTriangle, FileText } from "lucide-react";
 import { ShipmentDetailsDialog } from "@/components/shipment/ShipmentDetailsDialog";
 import { ShipmentTimer } from "@/components/shipment/ShipmentTimer";
 import { ShipmentTableView } from "@/components/shipment/ShipmentTableView";
@@ -10,6 +10,17 @@ import { ShipmentViewControls } from "@/components/shipment/ShipmentViewControls
 import { DriverProfileDialog } from "@/components/driver/DriverProfileDialog";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { useNavigate } from "react-router-dom";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 const shipmentColumns = [
   {
@@ -85,6 +96,7 @@ const shipmentColumns = [
         advancePayment: 70,
         rejected_drivers_count: 0,
         delivery_window: "21/01 08:00 - 12:00",
+        hasPaymentProof: false, // Sem comprovante
       },
     ],
   },
@@ -119,7 +131,10 @@ export const ShipmentBoard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedDriver, setSelectedDriver] = useState<string | null>(null);
   const [driverDialogOpen, setDriverDialogOpen] = useState(false);
+  const [alertDialogOpen, setAlertDialogOpen] = useState(false);
+  const [shipmentToStart, setShipmentToStart] = useState<any>(null);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleViewDetails = (shipment: any) => {
     setSelectedShipment(shipment);
@@ -129,6 +144,31 @@ export const ShipmentBoard = () => {
   const handleDriverClick = (driverName: string) => {
     setSelectedDriver(driverName);
     setDriverDialogOpen(true);
+  };
+
+  const handleStartRide = (shipment: any) => {
+    if (!shipment.hasPaymentProof) {
+      setShipmentToStart(shipment);
+      setAlertDialogOpen(true);
+    } else {
+      startRide(shipment);
+    }
+  };
+
+  const startRide = (shipment: any) => {
+    toast({
+      title: "Corrida Iniciada",
+      description: `Embarque #${shipment.id} iniciado com sucesso!`,
+    });
+    // Aqui você pode adicionar lógica para atualizar o status no backend
+  };
+
+  const handleForceStart = () => {
+    if (shipmentToStart) {
+      startRide(shipmentToStart);
+      setAlertDialogOpen(false);
+      setShipmentToStart(null);
+    }
   };
 
   const visibleColumns = focusColumn 
@@ -158,6 +198,34 @@ export const ShipmentBoard = () => {
         onOpenChange={setDriverDialogOpen}
         driverName={selectedDriver}
       />
+
+      <AlertDialog open={alertDialogOpen} onOpenChange={setAlertDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-warning">
+              <AlertTriangle className="h-5 w-5" />
+              Comprovante de Pagamento Ausente
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                O comprovante de pagamento do motorista não foi anexado. 
+              </p>
+              <p className="font-medium text-foreground">
+                Deseja iniciar a corrida mesmo assim?
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Caso prossiga, o embarque ficará marcado com aviso de comprovante pendente.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleForceStart} className="bg-warning hover:bg-warning/90">
+              Prosseguir Mesmo Assim
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div>
         <h2 className="text-3xl font-bold tracking-tight">
@@ -276,6 +344,15 @@ export const ShipmentBoard = () => {
                           </div>
                         )}
 
+                        {shipment.hasPaymentProof === false && column.status === "confirmed" && (
+                          <div className="pt-2 border-t">
+                            <Badge variant="outline" className="text-xs border-warning text-warning">
+                              <FileText className="h-3 w-3 mr-1" />
+                              Sem comprovante de pagamento
+                            </Badge>
+                          </div>
+                        )}
+
                         {shipment.actual_arrival && (
                           <div className="pt-2 border-t">
                             <p className="text-xs text-success font-medium">
@@ -318,7 +395,14 @@ export const ShipmentBoard = () => {
 
                         {column.status === "confirmed" && (
                           <div className="flex gap-2 pt-2">
-                            <Button className="flex-1 bg-gradient-primary hover:opacity-90" size="sm">
+                            <Button 
+                              className="flex-1 bg-gradient-primary hover:opacity-90" 
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleStartRide(shipment);
+                              }}
+                            >
                               <Play className="mr-1 h-3 w-3" />
                               Iniciar Corrida
                             </Button>
