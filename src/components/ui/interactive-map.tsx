@@ -292,135 +292,137 @@ export const AdvancedMap = ({
         style={{ height: '100%', width: '100%' }}
         scrollWheelZoom={true}
       >
-          <>
-            {/* Base tile layers */}
-            {currentLayers.openstreetmap && (
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          {((/*ctx*/) => (
+            <>
+              {/* Base tile layers */}
+              {currentLayers.openstreetmap && (
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+              )}
+              
+              {currentLayers.satellite && (
+                <TileLayer
+                  attribution='&copy; <a href="https://www.esri.com/">Esri</a>'
+                  url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                />
+              )}
+
+              {/* Map events */}
+              <MapEvents
+                onMapClick={handleMapClick}
+                onLocationFound={setUserLocation}
               />
-            )}
-            
-            {currentLayers.satellite && (
-              <TileLayer
-                attribution='&copy; <a href="https://www.esri.com/">Esri</a>'
-                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-              />
-            )}
 
-            {/* Map events */}
-            <MapEvents
-              onMapClick={handleMapClick}
-              onLocationFound={setUserLocation}
-            />
+              {/* Search control */}
+              {enableSearch && <SearchControl onSearch={handleSearch} />}
 
-            {/* Search control */}
-            {enableSearch && <SearchControl onSearch={handleSearch} />}
+              {/* Custom controls */}
+              {enableControls && (
+                <CustomControls
+                  onLocate={handleLocate}
+                  onToggleLayer={handleToggleLayer}
+                  layers={currentLayers}
+                />
+              )}
 
-            {/* Custom controls */}
-            {enableControls && (
-              <CustomControls
-                onLocate={handleLocate}
-                onToggleLayer={handleToggleLayer}
-                layers={currentLayers}
-              />
-            )}
+              {/* Markers (no clustering to ensure compatibility) */}
+              {markers.map((marker, index) => (
+                <Marker
+                  key={marker.id || index}
+                  position={marker.position}
+                  icon={marker.icon || createCustomIcon(marker.color, marker.size)}
+                  eventHandlers={{
+                    click: () => onMarkerClick && onMarkerClick(marker)
+                  }}
+                >
+                  {marker.popup && (
+                    <Popup>
+                      <div>
+                        <h3 className="font-semibold">{marker.popup.title}</h3>
+                        <p className="text-sm">{marker.popup.content}</p>
+                        {marker.popup.image && (
+                          <img 
+                            src={marker.popup.image} 
+                            alt={marker.popup.title}
+                            style={{ maxWidth: '200px', height: 'auto' }}
+                          />
+                        )}
+                      </div>
+                    </Popup>
+                  )}
+                </Marker>
+              ))}
 
-            {/* Markers (no clustering to ensure compatibility) */}
-            {markers.map((marker, index) => (
-              <Marker
-                key={marker.id || index}
-                position={marker.position}
-                icon={marker.icon || createCustomIcon(marker.color, marker.size)}
-                eventHandlers={{
-                  click: () => onMarkerClick && onMarkerClick(marker)
-                }}
-              >
-                {marker.popup && (
+              {/* User location marker */}
+              {userLocation && (
+                <Marker 
+                  position={userLocation}
+                  icon={createCustomIcon('red', 'medium')}
+                >
+                  <Popup>Sua localização atual</Popup>
+                </Marker>
+              )}
+
+              {/* Search result marker */}
+              {searchResult && (
+                <Marker 
+                  position={searchResult.latLng}
+                  icon={createCustomIcon('green', 'large')}
+                >
+                  <Popup>{searchResult.name}</Popup>
+                </Marker>
+              )}
+
+              {/* Clicked location marker */}
+              {clickedLocation && (
+                <Marker 
+                  position={[clickedLocation.lat, clickedLocation.lng]}
+                  icon={createCustomIcon('orange', 'small')}
+                >
                   <Popup>
-                    <div>
-                      <h3 className="font-semibold">{marker.popup.title}</h3>
-                      <p className="text-sm">{marker.popup.content}</p>
-                      {marker.popup.image && (
-                        <img 
-                          src={marker.popup.image} 
-                          alt={marker.popup.title}
-                          style={{ maxWidth: '200px', height: 'auto' }}
-                        />
-                      )}
-                    </div>
+                    Lat: {clickedLocation.lat.toFixed(6)}<br/>
+                    Lng: {clickedLocation.lng.toFixed(6)}
                   </Popup>
-                )}
-              </Marker>
-            ))}
+                </Marker>
+              )}
 
-            {/* User location marker */}
-            {userLocation && (
-              <Marker 
-                position={userLocation}
-                icon={createCustomIcon('red', 'medium')}
-              >
-                <Popup>Sua localização atual</Popup>
-              </Marker>
-            )}
+              {/* Polygons */}
+              {polygons.map((polygon, index) => (
+                <Polygon
+                  key={polygon.id || index}
+                  positions={polygon.positions}
+                  pathOptions={polygon.style || { color: 'purple', weight: 2, fillOpacity: 0.3 }}
+                >
+                  {polygon.popup && <Popup>{polygon.popup}</Popup>}
+                </Polygon>
+              ))}
 
-            {/* Search result marker */}
-            {searchResult && (
-              <Marker 
-                position={searchResult.latLng}
-                icon={createCustomIcon('green', 'large')}
-              >
-                <Popup>{searchResult.name}</Popup>
-              </Marker>
-            )}
+              {/* Circles */}
+              {circles.map((circle, index) => (
+                <Circle
+                  key={circle.id || index}
+                  center={circle.center}
+                  radius={circle.radius}
+                  pathOptions={circle.style || { color: 'blue', weight: 2, fillOpacity: 0.2 }}
+                >
+                  {circle.popup && <Popup>{circle.popup}</Popup>}
+                </Circle>
+              ))}
 
-            {/* Clicked location marker */}
-            {clickedLocation && (
-              <Marker 
-                position={[clickedLocation.lat, clickedLocation.lng]}
-                icon={createCustomIcon('orange', 'small')}
-              >
-                <Popup>
-                  Lat: {clickedLocation.lat.toFixed(6)}<br/>
-                  Lng: {clickedLocation.lng.toFixed(6)}
-                </Popup>
-              </Marker>
-            )}
-
-            {/* Polygons */}
-            {polygons.map((polygon, index) => (
-              <Polygon
-                key={polygon.id || index}
-                positions={polygon.positions}
-                pathOptions={polygon.style || { color: 'purple', weight: 2, fillOpacity: 0.3 }}
-              >
-                {polygon.popup && <Popup>{polygon.popup}</Popup>}
-              </Polygon>
-            ))}
-
-            {/* Circles */}
-            {circles.map((circle, index) => (
-              <Circle
-                key={circle.id || index}
-                center={circle.center}
-                radius={circle.radius}
-                pathOptions={circle.style || { color: 'blue', weight: 2, fillOpacity: 0.2 }}
-              >
-                {circle.popup && <Popup>{circle.popup}</Popup>}
-              </Circle>
-            ))}
-
-            {/* Polylines */}
-            {polylines.map((polyline, index) => (
-              <Polyline
-                key={polyline.id || index}
-                positions={polyline.positions}
-                pathOptions={polyline.style || { color: 'red', weight: 3 }}
-              >
-                {polyline.popup && <Popup>{polyline.popup}</Popup>}
-              </Polyline>
-            ))}
-          </>
+              {/* Polylines */}
+              {polylines.map((polyline, index) => (
+                <Polyline
+                  key={polyline.id || index}
+                  positions={polyline.positions}
+                  pathOptions={polyline.style || { color: 'red', weight: 3 }}
+                >
+                  {polyline.popup && <Popup>{polyline.popup}</Popup>}
+                </Polyline>
+              ))}
+            </>
+          )) as unknown as React.ReactNode}
       </MapContainer>
     </div>
   );
