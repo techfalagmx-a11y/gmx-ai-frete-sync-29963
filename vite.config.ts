@@ -8,6 +8,10 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    strictPort: false,
+    allowedHosts: mode === "production" 
+      ? [".onrender.com", "gmx-ai-frete-sync-29963.onrender.com"] 
+      : undefined,
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
